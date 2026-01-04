@@ -44,7 +44,9 @@
         "symfony/webpack-encore-bundle": "^2.4",
         "symfony/workflow": "6.4.*",
         "symfony/yaml": "6.4.*",
+        "twig/cssinliner-extra": "^3",
         "twig/extra-bundle": "^2.12|^3.0",
+        "twig/inky-extra": "^3",
         "twig/intl-extra": "^3",
         "twig/twig": "^2.12|^3.0"
     },
