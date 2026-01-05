@@ -14,6 +14,8 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Notifier\Notification\Notification;
+use Symfony\Component\Notifier\NotifierInterface;
 use Symfony\Component\Routing\Attribute\Route;
 
 final class ConferenceController extends AbstractController
@@ -45,6 +47,7 @@ final class ConferenceController extends AbstractController
         Request $request,
         Conference $conference,
         CommentRepository $commentRepository,
+        NotifierInterface $notifier,
         #[Autowire('%photo_dir%')] string $photoDir,
     ): Response {
 
@@ -71,7 +74,13 @@ final class ConferenceController extends AbstractController
 
             $this->bus->dispatch(new CommentMessage($comment->getId(), $context));
 
+            $notifier->send(new Notification('Благодарим вас за отзыв; ваш комментарий будет опубликован после модерации.', ['browser']));
+
             return $this->redirectToRoute('conference', ['slug' => $conference->getSlug()]);
+        }
+
+        if ($form->isSubmitted()) {
+            $notifier->send(new Notification('Можете ли вы проверить свою заявку? С ней возникли некоторые проблемы.', ['browser']));
         }
 
 
