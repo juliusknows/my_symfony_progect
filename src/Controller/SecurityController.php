@@ -2,13 +2,17 @@
 
 namespace App\Controller;
 
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
+use Twig\Environment;
 
-class SecurityController extends AbstractController
+
+class SecurityController
 {
+    public function __construct(private Environment $twig) {}
+
     #[Route(path: '/login', name: 'app_login')]
     public function login(AuthenticationUtils $authenticationUtils): Response
     {
@@ -18,10 +22,16 @@ class SecurityController extends AbstractController
         // last username entered by the user
         $lastUsername = $authenticationUtils->getLastUsername();
 
-        return $this->render('security/login.html.twig', [
+        return $this->myRender('security/login.html.twig', [
             'last_username' => $lastUsername,
             'error' => $error,
         ]);
+    }
+    private function myRender(string $view, array $parameters = []): Response
+    {
+        $html = $this->twig->render($view, $parameters);
+
+        return new Response($html);
     }
 
     #[Route(path: '/logout', name: 'app_logout')]
