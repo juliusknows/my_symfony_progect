@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use App\Entity\Comment;
 use App\Entity\Conference;
 use App\Form\CommentType;
@@ -9,7 +10,6 @@ use App\Message\CommentMessage;
 use App\Repository\CommentRepository;
 use App\Repository\ConferenceRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,35 +17,45 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Notifier\Notification\Notification;
 use Symfony\Component\Notifier\NotifierInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use Twig\Environment;
+use Symfony\Component\Form\FormFactoryInterface;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
-final class ConferenceController extends AbstractController
+final class ConferenceController
 {
     public function __construct(
-        private EntityManagerInterface $entityManager,
-        private MessageBusInterface $bus,
+        private readonly EntityManagerInterface $entityManager,
+        private readonly MessageBusInterface $bus,
+        private readonly Environment $twig,
+        private readonly FormFactoryInterface $formFactory,
+        private readonly UrlGeneratorInterface $urlGenerator,
     ) {
     }
 
     #[Route('/')]
     public function indexNoLocale(): Response
     {
-        return $this->redirectToRoute('homepage', ['_locale' => 'en']);
+        $homepageUrl = $this->urlGenerator->generate('homepage', ['_locale' => 'en']);
+        return new RedirectResponse($homepageUrl, 302);
     }
 
     #[Route('/{_locale<%app.supported_locales%>}/', name: 'homepage')]
     public function index(ConferenceRepository $conferenceRepository): Response
     {
-        return $this->render('conference/index.html.twig', [
+        $indexHtml = $this->twig->render('conference/index.html.twig', [
             'conferences' => $conferenceRepository->findAll(),
-        ])  ->setSharedMaxAge(3600);
+        ]);
+        return new Response($indexHtml);
     }
 
     #[Route('/{_locale<%app.supported_locales%>}/conference_header', name: 'conference_header')]
     public function conferenceHeader(ConferenceRepository $conferenceRepository): Response
     {
-        return $this->render('conference/header.html.twig', [
+        $headerHtml = $this->twig->render('conference/header.html.twig', [
             'conferences' => $conferenceRepository->findAll(),
-        ])->setSharedMaxAge(3600);
+        ]);
+
+        return new Response($headerHtml);
     }
 
     #[Route('/{_locale<%app.supported_locales%>}/conference/{slug}', name: 'conference')]
@@ -58,7 +68,7 @@ final class ConferenceController extends AbstractController
     ): Response {
 
         $comment = new Comment();
-        $form = $this->createForm(CommentType::class, $comment);
+        $form = $this->formFactory->create(CommentType::class, $comment);
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
             $comment->setConference($conference);
@@ -82,7 +92,8 @@ final class ConferenceController extends AbstractController
 
             $notifier->send(new Notification('Благодарим вас за отзыв; ваш комментарий будет опубликован после модерации.', ['browser']));
 
-            return $this->redirectToRoute('conference', ['slug' => $conference->getSlug()]);
+            $url = $this->urlGenerator->generate('conference', ['slug' => $conference->getSlug()]);
+            return new RedirectResponse($url, 302);
         }
 
         if ($form->isSubmitted()) {
@@ -93,12 +104,13 @@ final class ConferenceController extends AbstractController
         $offset = max(0, $request->query->getInt('offset', 0));
         $paginator = $commentRepository->getCommentPaginator($conference, $offset);
 
-        return $this->render('conference/show.html.twig', [
+        $showHtml = $this->twig->render('conference/show.html.twig', [
             'conference' => $conference,
             'comments' => $paginator,
             'previous' => $offset - CommentRepository::COMMENTS_PER_PAGE,
             'next' => min(count($paginator), $offset + CommentRepository::COMMENTS_PER_PAGE),
-            'comment_form' => $form,
+            'comment_form' => $form->createView(),
         ]);
+        return new Response($showHtml);
     }
 }

@@ -22,18 +22,14 @@ class SecurityController
         // last username entered by the user
         $lastUsername = $authenticationUtils->getLastUsername();
 
-        $html = $this->twig->render('security/login.html.twig', [
+
+
+        $loginHtml = $this->twig->render('security/login.html.twig', [
             'last_username' => $lastUsername,
             'error' => $error,
         ]);
-        return new Response($html);
+        return new Response($loginHtml);
     }
-//    private function myRender(string $view, array $parameters = []): Response
-//    {
-//        $html = $this->twig->render($view, $parameters);
-//
-//        return new Response($html);
-//    }
 
     #[Route(path: '/logout', name: 'app_logout')]
     public function logout(): void
