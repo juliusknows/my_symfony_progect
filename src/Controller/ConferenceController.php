@@ -33,13 +33,6 @@ final class ConferenceController
     ) {
     }
 
-    #[Route('/')]
-    public function indexNoLocale(): Response
-    {
-        $homepageUrl = $this->urlGenerator->generate('homepage', ['_locale' => 'en']);
-        return new RedirectResponse($homepageUrl, 302);
-    }
-
     #[Route('/{_locale<%app.supported_locales%>}/', name: 'homepage')]
     public function index(): Response
     {
