@@ -29,6 +29,7 @@ final class ConferenceController
         private readonly Environment $twig,
         private readonly FormFactoryInterface $formFactory,
         private readonly UrlGeneratorInterface $urlGenerator,
+        private readonly ConferenceRepository $conferenceRepository,
     ) {
     }
 
@@ -40,19 +41,19 @@ final class ConferenceController
     }
 
     #[Route('/{_locale<%app.supported_locales%>}/', name: 'homepage')]
-    public function index(ConferenceRepository $conferenceRepository): Response
+    public function index(): Response
     {
         $indexHtml = $this->twig->render('conference/index.html.twig', [
-            'conferences' => $conferenceRepository->findAll(),
+            'conferences' => $this->conferenceRepository->findAll(),
         ]);
         return new Response($indexHtml);
     }
 
     #[Route('/{_locale<%app.supported_locales%>}/conference_header', name: 'conference_header')]
-    public function conferenceHeader(ConferenceRepository $conferenceRepository): Response
+    public function conferenceHeader(): Response
     {
         $headerHtml = $this->twig->render('conference/header.html.twig', [
-            'conferences' => $conferenceRepository->findAll(),
+            'conferences' => $this->conferenceRepository->findAll(),
         ]);
 
         return new Response($headerHtml);
