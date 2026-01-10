@@ -23,6 +23,9 @@ services:
     App\:
         resource: '../src/**'
         exclude: '../src/{DependencyInjection,Kernel.php}'
+
+    App\Controller\:
+        resource: '../src/Controller/**'
         tags: [ 'controller.service_arguments' ]
 
     # add more service definitions when explicit configuration is needed
